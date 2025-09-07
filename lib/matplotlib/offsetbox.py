@@ -1,4 +1,5 @@
 r"""
+
 Container classes for `.Artist`\s.
 
 `OffsetBox`
