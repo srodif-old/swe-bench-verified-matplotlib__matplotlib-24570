@@ -475,9 +475,16 @@ class HPacker(PackerBase):
             return 2 * pad, 2 * pad, pad, pad, []
 
         hd_list = [(h, yd) for w, h, xd, yd in whd_list]
+        # For HPacker, we need to swap "top" and "bottom" alignment
+        # because _get_aligned_offsets was designed for VPacker's coordinate system
+        align = self.align
+        if align == "top":
+            align = "bottom"
+        elif align == "bottom":
+            align = "top"
         height, ydescent, yoffsets = _get_aligned_offsets(hd_list,
                                                           self.height,
-                                                          self.align)
+                                                          align)
 
         pack_list = [w for w, h, xd, yd in whd_list]
         width, xoffsets_ = _get_packed_offsets(pack_list, self.width,

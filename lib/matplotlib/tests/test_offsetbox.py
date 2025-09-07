@@ -335,3 +335,41 @@ def test_arrowprops_copied():
                         arrowprops=arrowprops)
     assert ab.arrowprops is not ab
     assert arrowprops["relpos"] == (.3, .7)
+
+
+def test_hpacker_align():
+    """Test that HPacker top/bottom alignment works correctly (issue #24570)."""
+    from matplotlib.offsetbox import HPacker, DrawingArea
+    
+    class MockRenderer:
+        def points_to_pixels(self, points):
+            return points
+    
+    # Create two drawing areas of different heights
+    da1 = DrawingArea(10, 20)  # 10 wide, 20 tall
+    da2 = DrawingArea(10, 30)  # 10 wide, 30 tall
+    
+    renderer = MockRenderer()
+    
+    # Test top alignment - elements should be aligned to the top
+    packer_top = HPacker(children=[da1, da2], align="top")
+    _, _, _, _, offsets_top = packer_top.get_extent_offsets(renderer)
+    y_offsets_top = [offset[1] for offset in offsets_top]
+    
+    # Test bottom alignment - elements should be aligned to the bottom  
+    packer_bottom = HPacker(children=[da1, da2], align="bottom")
+    _, _, _, _, offsets_bottom = packer_bottom.get_extent_offsets(renderer)
+    y_offsets_bottom = [offset[1] for offset in offsets_bottom]
+    
+    # For top alignment, the shorter element (da1) should have a larger y-offset
+    # to position it at the same top level as the taller element (da2)
+    assert y_offsets_top[0] > y_offsets_top[1], \
+        f"Top alignment failed: shorter element offset {y_offsets_top[0]} should be > taller element offset {y_offsets_top[1]}"
+    
+    # For bottom alignment, both elements should have the same y-offset (both at bottom)
+    assert y_offsets_bottom[0] == y_offsets_bottom[1], \
+        f"Bottom alignment failed: both elements should have same offset, got {y_offsets_bottom}"
+    
+    # Bottom alignment offsets should be smaller than top alignment offsets
+    assert all(bottom < top for bottom, top in zip(y_offsets_bottom, y_offsets_top)), \
+        f"Bottom offsets {y_offsets_bottom} should be smaller than top offsets {y_offsets_top}"
